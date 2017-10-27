@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="app" ng-controller="app">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+@Html.DateFormate(date)
+</body>
+<script src="//cdn.bootcss.com/angular.js/1.6.6/angular.min.js"></script>
+<script>
+    var app = angular.module('app', []);
+    app.controller('app', function ($q) {
+        var defer = $q.defer();
+        var promise = defer.promise;
+        promise.then(function (resolve) {
+            console.log('new $q()');
+        }, function (reject) {
+            console.log('new $q()');
+        })
+        defer.resolve();//异步 操作成功
+        defer.reject();//异步 操作失败
+        //这两个只会有一个运行
+        //$%$^%$^$&
+        var promise2 = $q(function (resolve, reject) {
+            //直接调用$q()类似原生promise
+            setTimeout(reject, 2000);
+            setTimeout(resolve, 1000);
+            //这两个只会有一个运行
+        });
+        promise2.then(function (success) {
+            console.log('$q()');
+        }, function (Error) {
+            console.log('$q()');
+        })
+    })
+    //原生promise
+    var promise = new Promise(function (resolve, reject) {
+        //感觉这个不是很好用,
+        //如果可以外部调用promise.resolve(),promise.reject()这样就好了
+        setTimeout(resolve, 1000);
+        setTimeout(reject, 2000);
+        //这两个只会有一个运行
+    });
+    promise.then(function (success) {
+        console.log('new Promise()');
+    }, function (Error) {
+        console.log('new Promise()');
+    })
+
+    //#$%^&^&*()
+    function requestImg() {
+        var p = new Promise(function (resolve, reject) {
+            var img = new Image();
+            img.onload = function () {
+                resolve(img);
+            }
+            img.src = 'http://my.wiki.ptteng.com/images/logo/default-space-logo-48.png';
+        });
+        return p;
+    }
+
+    //延时函数，用于给请求计时
+    function timeout() {
+        var p = new Promise(function (resolve, reject) {
+            setTimeout(function () {
+                reject('图片请求超时');
+            }, 5000);
+        });
+        return p;
+    }
+
+    Promise
+        .race([requestImg(), timeout()])
+        .then(function (results) {
+            console.log(results);
+        })
+        .catch(function (reason) {
+            console.log(reason);
+        });
+</script>
+</html>

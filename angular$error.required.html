@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="app" ng-controller="app">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form name="angularForm">
+    <select required ng-model="sex">
+        <option value="">请选择</option>
+        <option value="0">男</option>
+        <option value="1">女</option>
+    </select>
+    <button ng-disabled="angularForm.$error.required">保存</button>
+</form>
+</body>
+<script src="//cdn.bootcss.com/angular.js/1.6.6/angular.min.js"></script>
+<script>
+    var app = angular.module('app', []);
+    app.controller('app', function ($scope) {
+
+    })
+</script>
+</html>

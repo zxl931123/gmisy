@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FormData上传图片</title>
+    <link href="//cdn.bootcss.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<label for="chooseFile" class="btn btn-info">
+    请选择图片
+    <input type="file" multiple="multiple" accept="image/*" id="chooseFile" style="display: none">
+</label>
+<label>
+    <input type="button" class="btn btn-success" id="upLoadBtn" value="上传">
+</label>
+<p><span style="vertical-align: middle;">上传进度:</span>
+    <progress id="myProgress" value="0" style="vertical-align: middle;"></progress>
+</p>
+<p><span>图片信息:</span><span id="imgInfo"></span></p>
+<p><span>图片展示:</span><span id="imgShow"></span></p>
+</body>
+<script>
+    var imgFile;//图片文件
+    var dom = {
+        chooseFileBtn: document.getElementById('chooseFile'),//文件选择
+        upLoadBtn: document.getElementById('upLoadBtn'),//上传btn
+        imgInfo: document.getElementById('imgInfo'),//图片信息
+        imgShow: document.getElementById('imgShow'),//图片展示
+        progress: document.getElementById('myProgress')//进度条
+    }
+    dom.chooseFileBtn.onchange = function () {
+        //因为没有开启多选，这里默认是第0个
+        //后来发现，点击了没有选择文件，this.files 就会没有文件，只能加了一个||判断
+        imgFile = this.files[0] || imgFile;
+        dom.imgInfo.innerHTML = '<br>文件名:' + imgFile.name + '<br>文件大小:' + (imgFile.size / 1024 / 1024).toFixed(2) + 'm';
+        dom.progress.value = 0;
+    };
+    dom.upLoadBtn.onclick = function () {
+        if (imgFile.size > 1024000) {
+            alert('文件太大了~');
+            return;
+        }
+        var formData = new FormData();
+        formData.append('file', imgFile);//追加
+        var promise = ajax({
+            method: 'post',
+            url: '/carrots-admin-ajax/a/u/img/task',
+            async: true,
+            sendData: formData,
+        });
+        promise.then(function (res) {
+            res = JSON.parse(res);
+            dom.imgShow.innerHTML += '<br><img src="' + res.data.url + '" />';
+        }, function (res) {
+            alert(res);
+        })
+    };
+    //封装ajax。。基础的
+    var ajax = function (config) {
+        if (!config) {
+            throw new Error('config is not defined')
+        } else if (Object.keys(config).length != 4) {
+            throw new Error('config参数不正确');
+        }
+        var xhr = new XMLHttpRequest();
+        xhr.open(config.method, config.url, config.async);
+        return new Promise(function (resolve, reject) {
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    resolve(xhr.responseText);
+                }
+            }
+            xhr.upload.onprogress = function () {
+                //进度条的回调函数，可选~
+                if (progressCallback) {
+                    progressCallback(event);
+                }
+            }
+            xhr.onerror = function () {
+                reject('请求发生了一个错误');
+            }
+            xhr.send(config.sendData);
+        })
+    }
+
+    function progressCallback(e) {
+        //我这里测出一个大致的速度
+        var i = 0;
+        var timer;
+        var total = Math.round(e.total / 1000);
+        if (e.lengthComputable) {
+            dom.progress.setAttribute('max', total);
+            timer = setInterval(function () {
+                dom.progress.value = i;
+                i = i + 40;
+                if (i > total) {
+                    dom.progress.value = total;
+                    clearInterval(timer);
+                }
+            }, 10)
+        }
+    }
+</script>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>设计模式</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            padding: 0 10%;
+        }
+
+        .container {
+            background: #eee;
+        }
+
+        tr[title=user杀] {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <input type="text" id="userNameInput" placeholder="请输入用户名">
+    <input type="button" id="addUserBtn" value="添加用户">
+    <input type="button" id="removeUserBtn" value="移除用户">
+    <input type="button" id="setAdminBtn" value="设置你是谁">
+    <span style="text-align: start">你现在是:<span class="adminInfo" style="color: red">未设置</span></span>
+    <p>我的特别关注：<span class="myCare"></span></p>
+    <table class="usersTable" width="100%">
+        <thead>
+        <td>ID</td>
+        <td>用户名</td>
+        <td>粉丝数量</td>
+        <td>关注人数</td>
+        <td>身份</td>
+        <td>未读消息</td>
+        <td>特别关注</td>
+        <td>发布动态</td>
+    </table>
+</div>
+</body>
+<script>
+    var manage = function () {
+        //想写一个东西，所有用户可以互相订阅，有动态就会更新
+        var manage = {
+            users: {},
+            total: 0,
+            admin: undefined,
+            addUser: function (name) {
+                var canCreate = manage.checkNewUser(name);
+                if (!canCreate) {
+                    return false;
+                }
+                //用户可以创建,调用XXX，用户默认配置
+                manage.total++;
+                manage.users[name] = new manage.creatUser({name: name, id: manage.total});
+                return true;
+            },
+            removeUser: function (name) {
+                if (!(name in manage.users)) {
+                    alert('用户不存在，无需删除!');
+                    return false;
+                }
+                manage.users[name] = undefined;
+                return true;
+            },
+            //检测是否可以创建
+            checkNewUser: function (name) {
+                //汉字正则/[\u4e00-\u9fa5]+/
+                if (name.length === 0) {
+                    alert('请输入用户名！');
+                    return false;
+                }
+                if (!/[\u4e00-\u9fa5]+/.test(name)) {
+                    alert('用户名必须包含汉字！');
+                    return false;
+                }
+                if (manage.users[name] != undefined) {
+                    alert('用户已存在！');
+                    return false;
+                }
+                return true;
+            },
+            //构造
+            creatUser: function (config) {
+                this.name = config.name;
+                this.id = config.id;
+                this.role = config.role || '游客';
+                this.careUsers = [];
+                this.fans = [];
+                this.message = 0;
+            },
+        };
+        //关注,订阅
+        manage.creatUser.prototype.toggleCareStatusByUserName = function (userName, isCare) {
+            //isCare true关注 false取消关注
+            var self = this;
+            if (!(userName in manage.users)) {
+                alert('用户不存在!');
+                return false;
+            }
+            if (userName === manage.admin) {
+                alert('不能关注自己哟!');
+                return false;
+            }
+            if (isCare) {
+                //关注某人
+                self.careUsers.push(userName);
+                //某人设置事件
+                manage.users[userName]['fans'].push(self.name);
+            } else {
+                //取消关注某人
+                self.careUsers.splice(self.careUsers.indexOf(userName), 1);
+                //某人设置事件
+                manage.users[userName]['fans'].splice(manage.users[userName]['fans'].indexOf(userName), 1);
+            }
+            return true;
+
+        }
+        //发布动态
+        manage.creatUser.prototype.sendNewMessageToInterNet = function (content, callback) {
+            //通知自己粉丝，传入动态内容
+            var self = this;
+            self.fans.forEach(function (v, i, arr) {
+                manage.users[v].getNewMessageFromInterNet(self.name, self.name, callback);
+            })
+        }
+        //接受动态
+        manage.creatUser.prototype.getNewMessageFromInterNet = function (userName, content, callback) {
+            if (callback) {
+                callback({userName: userName, content: content});
+                return '已有回调函数1';
+            }
+            console.log('%c' + userName + ':' + (new Date()) + '发送了一条动态，内容是：' + content, 'color:red;');
+        }
+        //get 自己关心，输出字符串
+        //接受动态
+        manage.creatUser.prototype.exportMyCare = function () {
+            return !manage.admin ? "暂无特别关注!" : manage.users[manage.admin].careUsers.length === 0 ? "暂无特别关注!" : manage.users[manage.admin].careUsers.join(',');
+        }
+        return manage;
+    }();
+    var userName = document.getElementById('userNameInput');
+    var addUserBtn = document.getElementById('addUserBtn');
+    var removeUserBtn = document.getElementById('removeUserBtn');
+    var setAdminBtn = document.getElementById('setAdminBtn');
+    var usersView = document.querySelector('.usersTable');
+    var adminInfo = document.querySelector('.adminInfo');
+    var myCare = document.querySelector('.myCare');
+    addUserBtn.onclick = function () {
+        var isAdd = manage.addUser(userName.value);
+        if (!isAdd) {
+            return;
+        }
+        var self = manage.users[userName.value];
+        var node = document.createElement('tr');
+        node.setAttribute('getSelf', userName.value);
+        node.innerHTML = '<td>' + self.id + '</td>' + '<td>' + self.name + '</td>' + '<td>' + self.careUsers.length
+            + '</td>' + '<td>' + self.fans.length + '</td>' + '<td>' + self.role + '</td>' + '<td>' + self.message + '</td>'
+            + '<td><input type="checkbox" onclick="toggleCareStatus(event,this.checked)" /></td>' +
+            '<td><input type="button" value="发布一条动态" onclick="sendNewMessage(event)" /></td>';
+        usersView.appendChild(node);
+    }
+    removeUserBtn.onclick = function () {
+        var isRemove = manage.removeUser(userName.value);
+        if (!isRemove) {
+            return;
+        }
+        usersView.removeChild(document.querySelector('tr[getSelf=' + userName.value + ']'));
+    }
+    setAdminBtn.onclick = function () {
+        if (!(userName.value in manage.users)) {
+            alert('用户不存在!');
+            return;
+        }
+        adminInfo.innerHTML = userName.value;
+        manage.admin = userName.value;
+        myCare.innerHTML = manage.users[manage.admin].exportMyCare();
+    }
+
+    function toggleCareStatus(event, isChecked) {
+        var self = event.target;
+        var userName = self.parentNode.parentNode.getAttribute('getSelf');
+        if (manage.admin === undefined) {
+            alert('设置了你是谁，才能关注!');
+            self.checked = false;
+            return false;
+        }
+        //isChecked 2个状态，true关注，false取消关注
+        var isChangeStatus = manage.users[manage.admin].toggleCareStatusByUserName(userName, isChecked);
+        if (!isChangeStatus) {
+            //更改状态失败，复选框不打勾
+            self.checked = false;
+            return;
+        }
+        myCare.innerHTML = manage.users[manage.admin].exportMyCare();
+        console.log(manage.users[manage.admin]);
+    }
+
+    function sendNewMessage(event) {
+        var self = event.target;
+        var userName = self.parentNode.parentNode.getAttribute('getSelf');
+        var message = manage.users[userName].sendNewMessageToInterNet(new Date(), loadNewMessage);
+    }
+
+    function loadNewMessage(data) {
+        var node = document.createElement('p');
+        node.style.fontSize = '12px';
+        node.style.color = 'red';
+        node.innerHTML = data.userName + '：发布了一条动态，内容是' + data.content;
+        document.body.appendChild(node);
+    }
+</script>
+</html>

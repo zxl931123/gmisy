@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>reduce数组高效率求和</title>
+</head>
+<body>
+
+</body>
+<script>
+    var arr = [1, 2, 3, 4];
+    var res = arr.reduce(function (lastRes, value, index, array) {
+        //这个callback，接受四个参数
+        //上一次处理完的结果，当前值，当前索引index，数组自身
+        return lastRes + value;
+        //每次处理完都会保存一个结果，在下次处理的时候通过第一个参数获取，就是lastRes
+        //reduce()方法的原理应该是。。。数组第0个当做默认结果，从第1个元素开始运行callback,最后返回结果
+    });
+    Array.prototype.reduce2 = function (callback) {
+        if (!callback) {
+            throw new Error(arguments[0] + ' is not a function');
+            //不需要return
+        }
+        //自身数组
+        var array = this, endFlag = array.length, index = 1, res = array[0];
+        while (index < endFlag) {
+            res = callback(res, array[index], index, array);
+            index++;
+        }
+        return res;
+    }
+    var res2 = arr.reduce2(function (lastRes, value, index, array) {
+        return lastRes + value;
+    });
+</script>
+</html>

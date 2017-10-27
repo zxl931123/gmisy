@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"/>
+    <title></title>
+</head>
+
+<body>
+</body>
+<script type="text/javascript">
+    //console.warn('%cok', 'color:red;font-size:50px;background:black')
+    var instance = new Promise(function (resolve, reject) {
+
+    });
+    instance.then(function (s) {
+        console.log(1);
+    }, function (e) {
+        console.log(2);
+    })
+    console.log(instance);
+    console.log(Promise);
+    var a = 's'; //类型是string 不是String---》这是一个函数
+    //alert(Object.getPrototypeOf(a) === String.prototype)
+
+    function* test() {
+        var a = function () {
+        }
+        yield a(); //暂停
+        var b = function () {
+        }
+        yield b();
+        var c = function () {
+        }
+        c();
+    };
+    var rTest = test();
+    var res = rTest.next();
+    var res = rTest.next();
+    var res = rTest.next();
+</script>
+
+</html>

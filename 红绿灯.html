@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>红绿灯</title>
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        div.lamp {
+            position: fixed;
+            height: 200px;
+            width: 200px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+        }
+
+        div.lamp.red {
+            background-color: red;
+        }
+
+        div.lamp.green {
+            background-color: green;
+        }
+
+        div.lamp.yellow {
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+<div class="lamp"></div>
+<script>
+    ~function () {
+        var lamp = document.querySelector('.lamp');
+        var Util = {
+            addClass(element, ...css) {
+                var res = element.className;
+                css.forEach((v) => res += ' ' + v);
+                element.className = res;
+                return this;
+            },
+            removeClass(element, ...css) {
+                //运算符 .()[] 优先级最高，从左向右
+                var res = element.className.split(' ');
+                css.forEach((v) => {
+                    var index = res.indexOf(v);
+                    if (index != -1) {
+                        res.splice(index, 1);
+                    }
+                });
+                //把数组元素提取到一个字符串中，如果省略分隔符，则使用逗号作为分隔符。
+                element.className = res.join(' ');
+                return this;
+            }
+        }
+        var toggleColor = function (agoClassName) {
+            //切换颜色之后上一次的颜色，后面会被赋值
+            var agoClassName = agoClassName;
+            var timer;
+            var begin = function () {
+                return new Promise(function (resolve) {
+                    timer = setTimeout(resolve, 2000);
+                });
+            }
+            var after = function () {
+                return new Promise(function (resolve) {
+                    timer = setTimeout(resolve, 1000);
+                });
+            }
+            var finish = function () {
+                return new Promise(function (resolve) {
+                    timer = setTimeout(resolve, 2000);
+                });
+            }
+            begin().then(() => {
+                Util.removeClass(lamp, agoClassName);
+                Util.addClass(lamp, 'red');
+                agoClassName = 'red';
+                return after();
+            }).then(() => {
+                Util.removeClass(lamp, agoClassName);
+                Util.addClass(lamp, 'yellow');
+                agoClassName = 'yellow';
+                return finish();
+            }).then(() => {
+                Util.removeClass(lamp, agoClassName);
+                Util.addClass(lamp, 'green');
+                clearTimeout(timer);
+                toggleColor('green');
+            })
+        }
+        //开始
+        toggleColor();
+    }()
+</script>
+</body>
+</html>
